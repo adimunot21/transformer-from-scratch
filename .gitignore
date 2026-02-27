@@ -1,7 +1,7 @@
 __pycache__/
 *.pyc
 .DS_Store
-checkpoints/
+checkpoints/*.pt
 data/input.txt
 *.egg-info/
 .ipynb_checkpoints/
