@@ -137,6 +137,22 @@ python notebooks/explore.py
 
 4. **BPE compression matters.** 2x compression means the same context window sees twice as much text, enabling longer-range pattern learning.
 
+## Course: Learn Transformers From Scratch
+
+This project includes a full 8-chapter written course explaining every concept, every line of code, and every design decision. Written for someone who knows Python but is new to ML/deep learning.
+
+| Chapter | Topic | What You'll Learn |
+|---------|-------|-------------------|
+| [0: Introduction](course/00_introduction.md) | Big picture & setup | What a language model is, the Transformer architecture overview, environment setup |
+| [1: Data Pipeline](course/01_data_pipeline.md) | Tokenization & datasets | Character tokenizer, next-character prediction, PyTorch Dataset/DataLoader |
+| [2: Embeddings](course/02_embeddings.md) | Turning numbers into meaning | Token embeddings, positional embeddings, broadcasting, dropout |
+| [3: Attention](course/03_attention.md) | The heart of the Transformer | Q/K/V projections, scaled dot-product, causal masking, multi-head attention |
+| [4: Transformer Block](course/04_transformer_block.md) | Assembling the full model | Feed-forward network, GELU, layer norm, residual connections, full GPT |
+| [5: Training](course/05_training.md) | Teaching the model | AdamW optimizer, LR scheduling, gradient clipping, loss curves, perplexity |
+| [6: Generation](course/06_generation.md) | Making the model write | Autoregressive decoding, temperature, top-k sampling, sampling strategies |
+| [7: BPE Tokenizer](course/07_bpe_tokenizer.md) | The tokenizer behind GPT | Byte-Pair Encoding algorithm, byte-level encoding, compression, subword discovery |
+| [8: Decision Transformer](course/08_decision_transformer.md) | RL via sequence modeling | Return conditioning, interleaved sequences, CartPole control, robotics connections |
+
 ## Built With
 - PyTorch (CPU + CUDA)
 - No high-level Transformer libraries — everything from scratch
