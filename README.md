@@ -4,6 +4,59 @@ A complete implementation of the Transformer architecture in PyTorch — no `nn.
 
 Extends beyond standard language modeling into **BPE tokenization** and a **Decision Transformer** for reinforcement learning, demonstrating that the same attention mechanism powers both text generation and robot control.
 
+## v2: From Shakespeare Toy to a Chatbot (`src/llm/`)
+
+The original project (below) proves the mechanics; **v2 builds a model you can actually talk to**: a ~101M-parameter Llama-style LM, pretrained on 10B tokens of FineWeb-Edu and instruction-tuned on smol-smoltalk — for a total GPU budget of roughly £30–45 on a single rented H100.
+
+What's modern about the v2 architecture (all hand-written, unit-tested):
+
+| Legacy (v1, GPT-2 style) | v2 (Llama-3 style) |
+|---|---|
+| Learned positional embeddings | **RoPE** (rotary embeddings — relative positions, zero params) |
+| LayerNorm with biases | **RMSNorm**, no biases anywhere |
+| GELU MLP (4×) | **SwiGLU** gated MLP |
+| Per-head Q/K/V linears in a Python loop | **Fused QKV** projection, one GEMM |
+| Full multi-head attention | **Grouped-Query Attention** (4 KV heads shared by 12 Q heads) |
+| Materialized T×T attention matrix | `F.scaled_dot_product_attention` (flash), with the from-scratch path kept as `attn_impl="manual"` and tested to match |
+| O(T²)-per-token generation | **Static KV-cache** — O(T) per token, tested token-identical to the uncached path |
+| Separate LM head | **Weight tying** with the token embedding |
+| Char-level / pure-Python BPE | **32K byte-level BPE** trained on FineWeb-Edu (HF `tokenizers`), chat special tokens reserved from day one |
+| CPU-only loop | bf16 autocast, grad accumulation, `torch.compile`, **fully resumable checkpoints** (model+optimizer+data position+RNG), wandb, tok/s + MFU metering |
+
+### The three phases
+
+1. **Phase 1 — pipeline proof (≈£0–5):** train the 25M config on TinyStories (`configs/tinystories_25m.py`) on a cheap GPU/Colab until it writes coherent stories. Gates: kill-and-resume reproduces the loss curve (tested in `tests/test_train.py`), cached == uncached generation.
+2. **Phase 2 — pretraining (≈£16–32):** 101M params × 10B FineWeb-Edu tokens on 1× H100 (`configs/pretrain_110m.py`), ~7–9 hrs. Success bar: val loss ≈ 3.0–3.3, HellaSwag acc_norm ≥ 29% (`src/llm/evals.py`; GPT-2 124M ≈ 31%).
+3. **Phase 3 — chatbot (≈£3–8):** SFT on smol-smoltalk with ChatML template and prompt-masked loss (`scripts/run_sft.py`), then chat via `python -m src.llm.chat --ckpt ... --tokenizer ...`.
+
+### v2 quickstart
+
+```bash
+pip install -r requirements-v2.txt
+pytest tests/ -v                       # 31 correctness gates, CPU, ~4s
+
+# Phase 1 (run on any GPU box / Colab):
+python scripts/train_tokenizer.py --out data/tokenizer_32k.json
+python scripts/prepare_data.py --dataset roneneldan/TinyStories \
+    --tokenizer data/tokenizer_32k.json --out data/shards_tinystories --val-tokens 5000000
+python -m src.llm.train configs/tinystories_25m.py
+
+# Phase 2 (tokenize offline first, then on the rented H100):
+python scripts/prepare_data.py --dataset HuggingFaceFW/fineweb-edu --config sample-10BT \
+    --tokenizer data/tokenizer_32k.json --out data/shards_fineweb
+python -m src.llm.train configs/pretrain_110m.py            # add --resume checkpoints/.../latest.pt after a kill
+
+# Phase 3:
+python scripts/run_sft.py --ckpt checkpoints/pretrain_110m/best.pt --tokenizer data/tokenizer_32k.json
+python -m src.llm.chat --ckpt checkpoints/sft/final.pt --tokenizer data/tokenizer_32k.json
+```
+
+Status: code + tests complete; training runs pending. Results will be reported here honestly (loss curves, evals, cost ledger, limitations).
+
+---
+
+## v1: The original educational project
+
 ## What's Inside
 
 ### Core Transformer (Phases 1–5)
