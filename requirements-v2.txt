@@ -1,0 +1,10 @@
+# Dependencies for the v2 stack (src/llm/).
+# The legacy project (src/*.py) keeps using requirements.txt.
+torch>=2.4
+numpy
+tokenizers>=0.20      # Rust BPE — training/encoding at pretraining scale
+datasets>=3.0         # streaming FineWeb-Edu / TinyStories / smol-smoltalk
+tqdm
+pytest                # tests/ correctness gates
+# optional:
+# wandb               # set TrainConfig.wandb_project to enable

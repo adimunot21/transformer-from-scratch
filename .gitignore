@@ -5,3 +5,7 @@ checkpoints/*.pt
 data/input.txt
 *.egg-info/
 .ipynb_checkpoints/
+checkpoints/
+data/shards*/
+data/*.bin
+wandb/
