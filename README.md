@@ -128,6 +128,32 @@ Every component from scratch using only: `nn.Linear`, `nn.Embedding`, `nn.LayerN
 | 500 | 76.0 ± 70.2 | 491 |
 | Random baseline | 22.2 ± 14.1 | — |
 
+## Trained Weights
+
+Both language models are published on the Hugging Face Hub:
+**[adimunot/transformer-from-scratch](https://huggingface.co/adimunot/transformer-from-scratch)**
+
+| Folder | Tokenizer | Vocab | Params | d_model | Heads | Layers | Context |
+|---|---|---|---|---|---|---|---|
+| `char/` | character-level | 65 | 1.89M | 128 | 4 | 4 | 256 |
+| `bpe/` | BPE (from scratch) | 768 | 5.37M | 192 | 6 | 6 | 256 |
+
+Both are the final step-5000 checkpoints with optimizer state stripped — inference
+weights only. Each folder also carries a `config.json` with the exact architecture.
+
+```python
+import json
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
+
+repo = "adimunot/transformer-from-scratch"
+cfg  = json.load(open(hf_hub_download(repo, "bpe/config.json")))
+path = hf_hub_download(repo, "bpe/model.safetensors")
+
+model.load_state_dict(load_file(path))   # model built from cfg
+model.eval()
+```
+
 ## Project Structure
 
 ```
